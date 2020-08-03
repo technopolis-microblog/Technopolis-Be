@@ -1,4 +1,5 @@
-= Technopolis-Be
+= image:./.content/technopolis-logotype.png[align="center", alt="Technopolis"]
+銀猫さん <silverscat_3@mail.sc3.fun>
 
 Technopolis is a globally interconnected micro-blogging platform inspired by Misskey.
 
