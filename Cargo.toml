@@ -1,6 +1,7 @@
 [package]
 name = "technopolis-be"
 version = "0.1.0"
+license = "AGPL-3.0 or Apache-2.0"
 authors = ["silverscat-3 <silverscat_3@mail.sc3.fun>"]
 edition = "2018"
 
