@@ -32,10 +32,7 @@ Misskey Room:: Why was this implemented in Misskey?
 
 == License
 
-Technopolis-Be is licensed under either of the following, at your option:
-
-* Affero General Public License, Verison 3.0 (link:./LICENSE-AGPL[LICENSE-AGPL] or link:https://www.gnu.org/licenses/agpl-3.0.txt[])
-* Apache License, Verison 2.0 (link:./LICENSE-APACHE[LICENSE-APACHE] or link:https://www.apache.org/licenses/LICENSE-2.0.txt[])
+Licensed under the GNU Affero General Public License, Version 3(link:./LICENSE[LICENSE] or https://opensource.org/licenses/agpl-3.0)
 
 == Author
 
