@@ -9,3 +9,7 @@ edition = "2018"
 
 [dependencies]
 activitystreams = "0.7.0-alpha.3"
+paseto = "1.0"
+ulid = "0.4"
+iron = "0.6"
+diesel = { version = "1.4", features = [ "postgres" ] }
