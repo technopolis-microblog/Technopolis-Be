@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
 extern crate env_logger;
 
-use std::{ process, error::Error };
-use postgres::{Client, NoTls};
 use docopt::Docopt;
+use postgres::{Client, NoTls};
 use serde::Deserialize;
+use std::{error::Error, process};
 
 mod migrations;
 
@@ -28,7 +29,12 @@ struct Args {
 }
 
 fn migration<S: AsRef<str>>(host: S, user: S, password: S) -> Result<(), Box<dyn Error>> {
-    let params = format!("host={} user={} password={}", host.as_ref(), user.as_ref(), password.as_ref());
+    let params = format!(
+        "host={} user={} password={}",
+        host.as_ref(),
+        user.as_ref(),
+        password.as_ref()
+    );
 
     info!("Trying to migrate...");
     let mut client = Client::connect(&params, NoTls)?;
@@ -40,13 +46,14 @@ fn migration<S: AsRef<str>>(host: S, user: S, password: S) -> Result<(), Box<dyn
 
 fn main() {
     // コマンドラインを解析
-    let args:Args = Docopt::new(USAGE)
+    let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
     // あとは読んで字の如く
     if args.flag_version {
-        println!("Version");
+        let version = env!("CARGO_PKG_VERSION");
+        println!("Technopolis Backend Version: {}", version);
         process::exit(0);
     }
 
