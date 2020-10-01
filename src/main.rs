@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-#[macro_use]
-extern crate log;
-extern crate env_logger;
 
 use docopt::Docopt;
 use postgres::{Client, NoTls};
@@ -14,12 +11,22 @@ const USAGE: &'static str = "
 Technopolis backend
 
 Usage:
+    Technopolis
     Technopolis (-h | --help)
     Technopolis --version
 
 Options:
     -h --help       Show this screen.
     --version       Show version.
+";
+
+const SPLASH_TEXT: &'static str = "
+  __                .__                                .__  .__        
+_/  |_  ____   ____ |  |__   ____   ____ ______   ____ |  | |__| ______
+\\   __\\/ __ \\_/ ___\\|  |  \\ /    \\ /  _ \\\\____ \\ /  _ \\|  | |  |/  ___/
+ |  | \\  ___/\\  \\___|   Y  \\   |  (  <_> )  |_> >  <_> )  |_|  |\\___ \\ 
+ |__|  \\___  >\\___  >___|  /___|  /\\____/|   __/ \\____/|____/__/____  >
+           \\/     \\/     \\/     \\/       |__|                       \\/ 
 ";
 
 #[derive(Debug, Deserialize)]
@@ -36,10 +43,8 @@ fn migration<S: AsRef<str>>(host: S, user: S, password: S) -> Result<(), Box<dyn
         password.as_ref()
     );
 
-    info!("Trying to migrate...");
     let mut client = Client::connect(&params, NoTls)?;
     migrations::migrations::runner().run(&mut client)?;
-    info!("Migrate complete!");
 
     Ok(())
 }
@@ -62,6 +67,10 @@ fn main() {
         process::exit(0);
     }
 
+    println!("{}", SPLASH_TEXT);
+
     // データベースのマイグレーションを実行
+    println!("Trying to migrate...");
     migration("localhost", "vagrant", "password").expect("Migrate Failed!");
+    println!("Migrate complete!");
 }
