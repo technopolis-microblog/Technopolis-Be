@@ -31,23 +31,27 @@ EOF
 SCRIPT
 
 $start = <<SCRIPT
-    echo "Technopolis is ready. Let's roll!"
-    echo "To server start:"
-    echo '  $ vagrant ssh -c \"cd /srv/tp && cargo watch -x 'run' --clear\"'
+  # データベースを起動
+  sudo /etc/init.d/postgresql start
+  sudo /etc/init.d/redis start
+  
+  echo "Technopolis is ready. Let's roll!"
+  echo "To server start:"
+  echo '  $ vagrant ssh -c \"cd /srv/tp && cargo watch -x 'run' --clear\"'
 SCRIPT
 
 Vagrant.configure("2") do |config|
   config.vm.define "technopolis" do |config|
     # 基本的な設定
     config.vm.hostname = "technopolis"
-    config.vm.box = "alpine-linux/alpine-x86_64"
+    config.vm.box = "generic/alpine312"
     config.vm.provider "virtualbox" do |v|
       v.name = "tp_technopolis"
       v.memory = "2048"
     end
 
     # ファイル共有の設定
-    config.vm.synced_folder "./", "/srv/tp", type: "rsync", rsync__exclude: [".git/"]
+    config.vm.synced_folder "./", "/srv/tp", type: "rsync", rsync__exclude: [".git/", "target/"]
     config.vm.synced_folder ".", "/vagrant", disabled: true
 
     config.vm.network "forwarded_port", guest: 5432, host: 5432

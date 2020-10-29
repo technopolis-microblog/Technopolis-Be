@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use docopt::Docopt;
+use dotenv::dotenv;
 use postgres::{Client, NoTls};
 use serde::Deserialize;
 use std::{error::Error, process};
@@ -35,12 +36,18 @@ struct Args {
     flag_version: bool,
 }
 
-fn migration<S: AsRef<str>>(host: S, user: S, password: S) -> Result<(), Box<dyn Error>> {
+fn migration<S: AsRef<str>>(
+    host: S,
+    user: S,
+    password: S,
+    db_name: S,
+) -> Result<(), Box<dyn Error>> {
     let params = format!(
-        "host={} user={} password={}",
+        "host={} user={} password={} dbname={}",
         host.as_ref(),
         user.as_ref(),
-        password.as_ref()
+        password.as_ref(),
+        db_name.as_ref()
     );
 
     let mut client = Client::connect(&params, NoTls)?;
@@ -69,8 +76,21 @@ fn main() {
 
     println!("{}", SPLASH_TEXT);
 
+    dotenv().ok();
+
     // データベースのマイグレーションを実行
     println!("Trying to migrate...");
-    migration("localhost", "vagrant", "password").expect("Migrate Failed!");
+    migration(
+        dotenv::var("TECHNOPOLIS_POSTGRES_HOST")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_HOST\" is not set!"),
+        dotenv::var("TECHNOPOLIS_POSTGRES_USER")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_USER\" is not set!"),
+        dotenv::var("TECHNOPOLIS_POSTGRES_PASSWD")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_PASSWD\" is not set!"),
+        dotenv::var("TECHNOPOLIS_POSTGRES_DBNAME")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_DBNAME\" is not set!"),
+    )
+    .expect("Migrate Failed!");
+
     println!("Migrate complete!");
 }
