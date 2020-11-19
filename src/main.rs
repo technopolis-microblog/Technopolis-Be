@@ -30,24 +30,24 @@ _/  |_  ____   ____ |  |__   ____   ____ ______   ____ |  | |__| ______
            \\/     \\/     \\/     \\/       |__|                       \\/ 
 ";
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 #[derive(Debug, Deserialize)]
 struct Args {
     flag_help: bool,
     flag_version: bool,
 }
 
-fn migration<S: AsRef<str>>(
-    host: S,
-    user: S,
-    password: S,
-    db_name: S,
-) -> Result<(), Box<dyn Error>> {
+fn migration() -> Result<(), Box<dyn Error>> {
     let params = format!(
         "host={} user={} password={} dbname={}",
-        host.as_ref(),
-        user.as_ref(),
-        password.as_ref(),
-        db_name.as_ref()
+        dotenv::var("TECHNOPOLIS_POSTGRES_HOST")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_HOST\" is not set!"),
+        dotenv::var("TECHNOPOLIS_POSTGRES_USER")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_USER\" is not set!"),
+        dotenv::var("TECHNOPOLIS_POSTGRES_PASSWD")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_PASSWD\" is not set!"),
+        dotenv::var("TECHNOPOLIS_POSTGRES_DBNAME")
+            .expect("Environment \"TECHNOPOLIS_POSTGRES_DBNAME\" is not set!"),
     );
 
     let mut client = Client::connect(&params, NoTls)?;
@@ -64,8 +64,7 @@ fn main() {
 
     // あとは読んで字の如く
     if args.flag_version {
-        let version = env!("CARGO_PKG_VERSION");
-        println!("Technopolis Backend Version: {}", version);
+        println!("Technopolis Backend Version: {}", VERSION);
         process::exit(0);
     }
 
@@ -75,22 +74,12 @@ fn main() {
     }
 
     println!("{}", SPLASH_TEXT);
+    println!("Backend Version: {}", VERSION);
 
     dotenv().ok();
 
     // データベースのマイグレーションを実行
     println!("Trying to migrate...");
-    migration(
-        dotenv::var("TECHNOPOLIS_POSTGRES_HOST")
-            .expect("Environment \"TECHNOPOLIS_POSTGRES_HOST\" is not set!"),
-        dotenv::var("TECHNOPOLIS_POSTGRES_USER")
-            .expect("Environment \"TECHNOPOLIS_POSTGRES_USER\" is not set!"),
-        dotenv::var("TECHNOPOLIS_POSTGRES_PASSWD")
-            .expect("Environment \"TECHNOPOLIS_POSTGRES_PASSWD\" is not set!"),
-        dotenv::var("TECHNOPOLIS_POSTGRES_DBNAME")
-            .expect("Environment \"TECHNOPOLIS_POSTGRES_DBNAME\" is not set!"),
-    )
-    .expect("Migrate Failed!");
-
+    migration().expect("Migrate Failed!");
     println!("Migrate complete!");
 }
