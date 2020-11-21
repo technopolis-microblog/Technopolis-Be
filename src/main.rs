@@ -17,6 +17,7 @@ Technopolis backend
 
 Usage:
     Technopolis
+    Technopolis init
     Technopolis (-h | --help)
     Technopolis --version
 
@@ -35,13 +36,18 @@ _/  |_  ____   ____ |  |__   ____   ____ ______   ____ |  | |__| ______
 ";
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 #[derive(Debug, Deserialize)]
 struct Args {
+    cmd_init: bool,
+
     flag_help: bool,
     flag_version: bool,
 }
 
 fn migration() -> Result<(), Box<dyn Error>> {
+    println!("Trying to migrate...");
+
     let params = format!(
         "host={} user={} password={} dbname={}",
         dotenv::var("TECHNOPOLIS_POSTGRES_HOST")
@@ -57,6 +63,8 @@ fn migration() -> Result<(), Box<dyn Error>> {
     let mut client = Client::connect(&params, NoTls)?;
     migrations::migrations::runner().run(&mut client)?;
 
+    println!("Migrate complete!");
+
     Ok(())
 }
 
@@ -66,24 +74,32 @@ fn main() {
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    // あとは読んで字の如く
+    // 付けたら処理せず終了する系のフラグを処理
+
+    // --version
     if args.flag_version {
-        println!("Technopolis Backend Version: {}", VERSION);
+        println!("Technopolis Backend Version: v{}", VERSION);
         process::exit(0);
     }
 
+    // --help
     if args.flag_help {
         println!("{}", USAGE);
         process::exit(0);
     }
 
     println!("{}", SPLASH_TEXT);
-    println!("Backend Version: {}", VERSION);
+    println!("Backend Version: v{}", VERSION);
 
     dotenv().ok();
 
-    // データベースのマイグレーションを実行
-    println!("Trying to migrate...");
-    migration().expect("Migrate Failed!");
-    println!("Migrate complete!");
+    // サブコマンドを処理
+
+    // init
+    if args.cmd_init {
+        // データベースのマイグレーションを実行
+        migration().expect("Migrate Failed!");
+
+        process::exit(0);
+    }
 }
