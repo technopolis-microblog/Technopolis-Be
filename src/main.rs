@@ -8,6 +8,10 @@ use std::{error::Error, process};
 
 mod migrations;
 
+mod infra;
+mod presentation;
+mod usecase;
+
 const USAGE: &'static str = "
 Technopolis backend
 
