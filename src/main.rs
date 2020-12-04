@@ -3,7 +3,11 @@
 use docopt::Docopt;
 use dotenv::dotenv;
 use postgres::{Client, NoTls};
-use serde::Deserialize;
+use serde::{
+    de::{Deserializer, Visitor},
+    Deserialize,
+};
+use std::fmt;
 use std::{error::Error, process};
 
 mod migrations;
@@ -16,17 +20,61 @@ const USAGE: &'static str = "
 Technopolis backend
 
 Usage:
-    Technopolis
-    Technopolis init
-    Technopolis (-h | --help)
-    Technopolis --version
+    Technopolis [<command>]
+    Technopolis [options]
 
 Options:
     -h --help       Show this screen.
     --version       Show version.
 ";
 
-const SPLASH_TEXT: &'static str = "
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
+struct CommandVisitor;
+impl<'de> Visitor<'de> for CommandVisitor {
+    type Value = Command;
+
+    fn expecting(&self, fomatter: &mut fmt::Formatter) -> fmt::Result {
+        fomatter.write_str("a string INIT")
+    }
+
+    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(match s.to_uppercase().as_str() {
+            "" => Command::None,
+            "INIT" => Command::Init,
+            s => Command::Unknown(s.to_string()),
+        })
+    }
+}
+
+#[derive(Debug)]
+enum Command {
+    Init,
+    None,
+    Unknown(String),
+}
+impl<'de> Deserialize<'de> for Command {
+    fn deserialize<D>(d: D) -> Result<Command, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        d.deserialize_str(CommandVisitor)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct Args {
+    arg_command: Command,
+
+    flag_help: bool,
+    flag_version: bool,
+}
+
+fn print_splash() {
+    const SPLASH_TEXT: &'static str = "
   __                .__                                .__  .__        
 _/  |_  ____   ____ |  |__   ____   ____ ______   ____ |  | |__| ______
 \\   __\\/ __ \\_/ ___\\|  |  \\ /    \\ /  _ \\\\____ \\ /  _ \\|  | |  |/  ___/
@@ -35,14 +83,8 @@ _/  |_  ____   ____ |  |__   ____   ____ ______   ____ |  | |__| ______
            \\/     \\/     \\/     \\/       |__|                       \\/ 
 ";
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-
-#[derive(Debug, Deserialize)]
-struct Args {
-    cmd_init: bool,
-
-    flag_help: bool,
-    flag_version: bool,
+    println!("{}", SPLASH_TEXT);
+    println!("Backend Version: v{}", VERSION);
 }
 
 fn migration() -> Result<(), Box<dyn Error>> {
@@ -79,27 +121,39 @@ fn main() {
     // --version
     if args.flag_version {
         println!("Technopolis Backend Version: v{}", VERSION);
+
         process::exit(0);
     }
 
     // --help
     if args.flag_help {
         println!("{}", USAGE);
+
         process::exit(0);
     }
-
-    println!("{}", SPLASH_TEXT);
-    println!("Backend Version: v{}", VERSION);
 
     dotenv().ok();
 
     // サブコマンドを処理
+    match args.arg_command {
+        Command::Init => {
+            print_splash();
 
-    // init
-    if args.cmd_init {
-        // データベースのマイグレーションを実行
-        migration().expect("Migrate Failed!");
+            // データベースのマイグレーションを実行
+            migration().expect("Migrate Failed!");
 
-        process::exit(0);
+            process::exit(0);
+        }
+        Command::Unknown(s) => {
+            println!("{} is unkown command.", s);
+            println!("{}", USAGE);
+
+            process::exit(1);
+        }
+        Command::None => {
+            println!("{}", USAGE);
+
+            process::exit(0);
+        }
     }
 }
